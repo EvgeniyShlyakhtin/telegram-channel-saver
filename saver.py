@@ -5,6 +5,10 @@ from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
 import asyncio
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -32,8 +36,20 @@ class ChannelSaver:
         self.db = self.load_database()
         
         # Telegram client
-        self.api_id = int(os.getenv('API_ID', '2***73'))
-        self.api_hash = os.getenv('API_HASH', 'e*******6a')
+        try:
+            self.api_id = int(os.getenv('API_ID'))
+            if not self.api_id:
+                raise ValueError("API_ID not found in environment variables")
+                
+            self.api_hash = os.getenv('API_HASH')
+            if not self.api_hash:
+                raise ValueError("API_HASH not found in environment variables")
+                
+        except (TypeError, ValueError) as e:
+            logger.error(f"Error loading API credentials: {e}")
+            print("\nError: Please make sure API_ID and API_HASH are properly set in .env file")
+            raise
+            
         self.client = None
         self.phone = None
 
@@ -617,16 +633,12 @@ class ChannelSaver:
     async def save_channel_messages(self, limit: int = None, force_redownload: bool = False):
         """
         Save messages from active channel in reverse order with rate limiting
-        
-        Args:
-            limit: Optional limit of messages to download
-            force_redownload: If True, redownload all messages even if they exist
         """
         active = self.get_active_channel()
         if not active:
             print("\nNo active channel selected!")
             return False
-            
+        
         try:
             print("\n" + "="*50)
             print(f"Channel: {active['title']}")
@@ -643,12 +655,17 @@ class ChannelSaver:
             # Get total message count and first message date
             print("\nAnalyzing channel messages...")
             first_message = None
+            last_message = None
+            
+            # Get first message (oldest)
             async for msg in self.client.iter_messages(active['id'], limit=1, reverse=True):
                 first_message = msg
+                print(f"First message found: #{msg.id} ({msg.date})")
             
-            last_message = None
+            # Get last message (newest) 
             async for msg in self.client.iter_messages(active['id'], limit=1):
                 last_message = msg
+                print(f"Last message found: #{msg.id} ({msg.date})")
                 
             if not first_message or not last_message:
                 print("\nNo messages found in channel!")
@@ -683,35 +700,40 @@ class ChannelSaver:
             # Progress tracking
             start_time = datetime.now()
             last_save_time = start_time
-            last_batch_time = start_time
             
             # Process messages in batches
-            current_offset = 0
             current_id = last_message.id
             
             while current_id >= first_message.id:
                 try:
-                    # Check time since last batch
-                    now = datetime.now()
-                    time_since_batch = (now - last_batch_time).total_seconds()
-                    if time_since_batch < BATCH_DELAY:
-                        await asyncio.sleep(BATCH_DELAY - time_since_batch)
+                    print(f"\nFetching batch for messages <= {current_id}")
+                    print(f"Batch parameters:")
+                    print(f"- Channel ID: {active['id']}")
+                    print(f"- Limit: {MESSAGES_BATCH_SIZE}")
+                    print(f"- Min ID: {current_id - MESSAGES_BATCH_SIZE}")
+                    print(f"- Max ID: {current_id}")
                     
                     # Get batch of messages
                     batch_messages = []
                     async for message in self.client.iter_messages(
                         active['id'],
                         limit=MESSAGES_BATCH_SIZE,
-                        min_id=current_id - MESSAGES_BATCH_SIZE,
                         max_id=current_id
                     ):
                         batch_messages.append(message)
                     
+                    print(f"Retrieved {len(batch_messages)} messages in batch")
+                    if batch_messages:
+                        print(f"First message in batch: #{batch_messages[0].id}")
+                        print(f"Last message in batch: #{batch_messages[-1].id}")
+                    
                     if not batch_messages:
+                        print("\nNo more messages in batch, breaking loop")
                         break
                     
                     # Update current_id for next batch
                     current_id = min(msg.id for msg in batch_messages) - 1
+                    print(f"Next batch will start from ID: {current_id}")
                     
                     # Process batch
                     for message in batch_messages:
@@ -793,7 +815,6 @@ class ChannelSaver:
                             continue
                     
                     # Update progress
-                    current_offset = last_message.id - current_id
                     current_time = datetime.now()
                     elapsed = current_time - start_time
                     speed = (saved + updated + skipped) / elapsed.total_seconds() if elapsed.total_seconds() > 0 else 0
@@ -805,7 +826,7 @@ class ChannelSaver:
                     
                     # Update display
                     print("\033[F\033[K" * 7)
-                    print(f"Progress: {current_offset}/{total} messages ({current_offset/total*100:.1f}%)")
+                    print(f"Progress: {saved + updated + skipped}/{total} messages ({current_time - start_time})")
                     print(f"New: {saved} | Updated: {updated} | Skipped: {skipped} | Errors: {errors}")
                     print(f"Speed: {speed:.1f} messages/second")
                     print(f"Elapsed: {str(elapsed).split('.')[0]}")
@@ -815,13 +836,18 @@ class ChannelSaver:
                     
                     # Reset retry count on successful batch
                     retry_count = 0
-                    last_batch_time = current_time
                     
                 except Exception as batch_error:
-                    logger.error(f"Error processing batch: {str(batch_error)}")
+                    # Enhance error logging
+                    print(f"\nDebug: Batch error details:")
+                    print(f"- Error type: {type(batch_error).__name__}")
+                    print(f"- Error message: {str(batch_error)}")
+                    print(f"- Current message ID: {current_id}")
+                    logger.error(f"Error processing batch: {str(batch_error)}", exc_info=True)
+                    
                     retry_count += 1
                     if retry_count >= MAX_RETRIES:
-                        print(f"\nToo many errors, stopping download at message {current_offset}")
+                        print(f"\nToo many errors, stopping download at message {current_id}")
                         break
                     print(f"\nRetrying batch in {BATCH_DELAY * 2} seconds... ({retry_count}/{MAX_RETRIES})")
                     await asyncio.sleep(BATCH_DELAY * 2)
