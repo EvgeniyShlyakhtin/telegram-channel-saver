@@ -20,7 +20,8 @@ Created by [Sergey Bulaev](https://t.me/sergiobulaev) - Follow my Telegram chann
 1. Clone the repository:
    ```bash
    git clone https://github.com/chubajs/telegram-channel-saver.git
-   cd telegram-channel-saver   ```
+   cd telegram-channel-saver
+   ```
 
 2. Create and activate virtual environment:
    ```bash
@@ -30,38 +31,32 @@ Created by [Sergey Bulaev](https://t.me/sergiobulaev) - Follow my Telegram chann
 
    # On macOS/Linux
    python3 -m venv venv
-   source venv/bin/activate   ```
+   source venv/bin/activate
+   ```
 
 3. Install required dependencies:
    ```bash
-   pip install -r requirements.txt   ```
+   pip install -r requirements.txt
+   ```
 
 4. Get your Telegram API credentials:
    - Go to https://my.telegram.org/apps
    - Create a new application
    - Note your `api_id` and `api_hash`
 
--5. Set up environment variables (optional):
--
--   # On Windows
--   set API_ID=your_api_id
--   set API_HASH=your_api_hash
--
--   # On macOS/Linux
--   export API_ID='your_api_id'
--   export API_HASH='your_api_hash'
-+5. Create a `.env` file in the project root directory:
-+   ```
-+   # Telegram API Credentials
-+   API_ID=your_api_id      # numbers only, no quotes
-+   API_HASH=your_api_hash  # string, no quotes
-+   ```
+5. Create a `.env` file in the project root directory:
+   ```
+   # Telegram API Credentials
+   API_ID=your_api_id      # numbers only, no quotes
+   API_HASH=your_api_hash  # string, no quotes
+   ```
 
 ## Usage
 
 1. Run the application:
    ```bash
-   python saver.py   ```
+   python saver.py
+   ```
 
 2. First-time setup:
    - Enter your phone number in international format
