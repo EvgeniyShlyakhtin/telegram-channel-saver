@@ -1644,6 +1644,9 @@ class ChannelSaver:
         retry_count = 0
         max_retries = MEDIA_DOWNLOAD_RETRY
         
+        # Initialize start_time variable for both large and small files
+        start_time = datetime.now()
+        
         # Try to download with retries
         while retry_count <= max_retries:
             try:
@@ -1656,12 +1659,14 @@ class ChannelSaver:
                     print(f"Retry {retry_count}/{max_retries} after {delay:.1f} seconds...")
                     await asyncio.sleep(delay)
                 
+                # Reset start_time for each attempt
+                start_time = datetime.now()
+                
                 if is_large_file:
                     # Use chunked download for large files
                     print(f"Starting chunked download with {CHUNK_SIZE/1024:.0f}KB chunks...")
                     
                     # Use a custom progress callback
-                    start_time = datetime.now()
                     last_update_time = start_time
                     bytes_downloaded = 0
                     
