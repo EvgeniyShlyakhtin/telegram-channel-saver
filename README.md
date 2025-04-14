@@ -12,6 +12,34 @@ A Python tool for saving and analyzing Telegram channel content, including messa
 - Message download with rate limiting and error handling
 - Detailed statistics about saved content
 
+## Project Structure
+
+```
+/telegram-channel-saver/
+  ├── LICENSE             # MIT License
+  ├── README.md           # Project documentation
+  ├── docs/               # Documentation directory
+  │   ├── codebase.md     # Codebase documentation
+  │   ├── contributing.md # Contribution guidelines
+  │   ├── faq.md          # Frequently asked questions
+  │   ├── setup.md        # Setup instructions
+  │   └── telethon.txt    # Telethon library documentation
+  ├── requirements.txt    # Project dependencies
+  ├── main.py             # Main entry point
+  ├── CLAUDE.md           # Best practices and code guidelines
+  ├── src/                # Source code directory
+  │   ├── __init__.py     # Package initialization
+  │   ├── app.py          # Application initialization
+  │   ├── channels.py     # Channel management
+  │   ├── client.py       # Telegram client operations
+  │   ├── config.py       # Application configuration
+  │   ├── database.py     # Database operations
+  │   ├── media.py        # Media file handling
+  │   ├── messages.py     # Message operations
+  │   └── users.py        # User tracking
+  └── temp/               # Storage directory for data and sessions
+```
+
 ## Author
 
 Created by [Sergey Bulaev](https://t.me/sergiobulaev) - Follow my Telegram channel about AI and technology for more projects and updates.
@@ -56,7 +84,7 @@ Created by [Sergey Bulaev](https://t.me/sergiobulaev) - Follow my Telegram chann
 
 1. Run the application:
    ```bash
-   python saver.py
+   python main.py
    ```
 
 2. First-time setup:
@@ -115,11 +143,12 @@ All data is stored locally in JSON format:
 
 Data location: 
 - Messages and user data: `temp/channel_saver/database.json`
+- Downloaded media: `temp/media/`
 - Downloaded videos: `temp/videos/`
 
 ## Configuration
 
-Default settings (can be modified in `saver.py`):
+Default settings (can be modified in `src/config.py`):
 - `MESSAGES_BATCH_SIZE = 100` - Messages per batch
 - `BATCH_DELAY = 2` - Delay between batches (seconds)
 - `SAVE_INTERVAL = 300` - Database save interval (seconds)
@@ -146,6 +175,14 @@ Default settings (can be modified in `saver.py`):
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Documentation
+
+Detailed documentation is available in the `docs/` directory:
+- [Setup Instructions](docs/setup.md) - How to set up the project
+- [Codebase Overview](docs/codebase.md) - Overview of the codebase structure
+- [Contributing Guidelines](docs/contributing.md) - How to contribute to the project
+- [Frequently Asked Questions](docs/faq.md) - Common questions and answers
 
 ## Contributing
 
