@@ -1,9 +1,7 @@
-#!/usr/bin/env python3
 """
-Telegram Channel Saver
-A tool for downloading and saving content from Telegram channels.
+Telegram Channel Saver - Main entry point
 """
 from src.app import main
 
-if __name__ == '__main__':
-    main() 
+if __name__ == "__main__":
+    main()

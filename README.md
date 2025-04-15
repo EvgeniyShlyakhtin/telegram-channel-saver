@@ -133,6 +133,15 @@ Created by [Sergey Bulaev](https://t.me/sergiobulaev) - Follow my Telegram chann
 - Filter messages with media
 - View user's last messages
 
+### Export Features
+
+- Export all messages from a channel to a text file
+- Export messages from a specific user in a channel
+- Channel statistics display (message count, media count, user count)
+- Formatted export with original timestamps, user information, and replies
+- Automatic file naming with channel ID, channel name, and timestamp
+- Export files stored in 'exports' directory
+
 ## Data Storage
 
 All data is stored locally in JSON format:
@@ -145,6 +154,7 @@ Data location:
 - Messages and user data: `temp/channel_saver/database.json`
 - Downloaded media: `temp/media/`
 - Downloaded videos: `temp/videos/`
+- Exported message logs: `exports/`
 
 ## Configuration
 

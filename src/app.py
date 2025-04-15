@@ -16,6 +16,7 @@ from src.channels import list_channels, display_channels, select_active_channel,
 from src.users import save_channel_users, show_channel_users_stats, list_saved_users
 from src.messages import save_channel_messages, search_messages
 from src.media import download_video_messages, list_downloaded_videos
+from src.export import export_menu
 
 class ChannelSaver:
     """Main application class for Telegram Channel Saver"""
@@ -213,10 +214,11 @@ class ChannelSaver:
                 print("12. Search messages")
                 print("13. Download videos")
                 print("14. List downloaded videos")
-                print("15. Logout")
-                print("16. Exit")
+                print("15. Export messages")
+                print("16. Logout")
+                print("17. Exit")
                 
-                choice = input("\nEnter your choice (1-16): ")
+                choice = input("\nEnter your choice (1-17): ")
                 
                 if choice == '1':
                     me = await self.client.get_me()
@@ -324,6 +326,8 @@ class ChannelSaver:
                 elif choice == '14':
                     list_downloaded_videos(self.db)
                 elif choice == '15':
+                    await export_menu(self.db, self.client)
+                elif choice == '16':
                     await self.client.log_out()
                     print("\nLogged out successfully!")
                     if self.phone in self.db['sessions']:
@@ -332,7 +336,7 @@ class ChannelSaver:
                     self.db['active_channel'] = None
                     save_database(self.db_path, self.db)
                     break
-                elif choice == '16':
+                elif choice == '17':
                     break
                 else:
                     print("\nInvalid choice!")

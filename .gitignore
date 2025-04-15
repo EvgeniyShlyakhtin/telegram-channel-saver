@@ -33,6 +33,7 @@ env/
 
 # Project specific
 temp/
+exports/
 *.session
 *.session-journal
 .env
