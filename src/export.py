@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 
 from src.database import save_database
+from src.message_export import export_individual_messages
 
 logger = logging.getLogger(__name__)
 
@@ -406,9 +407,10 @@ async def export_menu(db, client=None):
     print("\nExport Options:")
     print("1. Export all messages")
     print("2. Export messages from a specific user")
+    print("3. Export individual message files with AI media analysis")
     print("0. Cancel")
     
-    choice = input("\nEnter your choice (0-2): ")
+    choice = input("\nEnter your choice (0-3): ")
     
     if choice == '1':
         # Export all messages
@@ -448,6 +450,32 @@ async def export_menu(db, client=None):
                 print("\nInvalid user number!")
         except ValueError:
             print("\nPlease enter a valid number!")
+    elif choice == '3':
+        # Export individual message files with AI analysis
+        print(f"\nExporting individual message files from {channel_title}...")
+        print("This will create a separate text file for each message/media group.")
+        
+        # Check if OpenRouter API key is configured
+        from src.config import OPENROUTER_API_KEY
+        if OPENROUTER_API_KEY:
+            print("✓ OpenRouter API key found - AI image analysis will be included")
+            include_analysis = True
+        else:
+            print("⚠ OpenRouter API key not found - AI image analysis will be disabled")
+            print("To enable AI analysis, set OPENROUTER_API_KEY environment variable")
+            include_analysis = False
+        
+        confirm = input(f"\nProceed with individual file export? (y/N): ").lower()
+        if confirm == 'y':
+            result = export_individual_messages(db, include_media_analysis=include_analysis)
+            if result['success']:
+                print(f"\n✓ Export completed successfully!")
+                print(f"Files exported: {result['exported_count']}")
+                print(f"Export location: {result['export_path']}")
+            else:
+                print(f"\n✗ Export failed: {result['error']}")
+        else:
+            print("\nExport cancelled.")
     elif choice == '0':
         return
     else:

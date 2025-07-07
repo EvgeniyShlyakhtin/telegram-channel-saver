@@ -29,7 +29,15 @@ CHUNK_SIZE = 1024 * 1024  # 1MB chunk size for large downloads
 # Directory settings
 TEMP_DIR = 'temp/channel_saver'
 VIDEO_TEMP_DIR = 'temp/videos'  # Directory for storing downloaded videos
+EXPORT_DIR = 'temp/exports'  # Directory for storing exported message files
+
+# OpenRouter API settings
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+OPENROUTER_MODEL = "openai/gpt-4o-mini"  # Default model for image analysis
+OPENROUTER_TIMEOUT = 30  # Timeout for API requests in seconds
 
 # Create temp directories if they don't exist
 os.makedirs(TEMP_DIR, exist_ok=True)
-os.makedirs(VIDEO_TEMP_DIR, exist_ok=True) 
+os.makedirs(VIDEO_TEMP_DIR, exist_ok=True)
+os.makedirs(EXPORT_DIR, exist_ok=True) 
