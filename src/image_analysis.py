@@ -57,7 +57,12 @@ def analyze_image_with_openrouter(image_path: str, prompt: str = None) -> Dict[s
     Returns:
         Dict containing analysis result or error information
     """
-    if not OPENROUTER_API_KEY:
+    # Reload environment variables to catch any updates
+    from dotenv import load_dotenv
+    load_dotenv()
+    api_key = os.getenv('OPENROUTER_API_KEY')
+    
+    if not api_key:
         return {
             'success': False,
             'error': 'OpenRouter API key not configured. Please set OPENROUTER_API_KEY environment variable.'
@@ -85,7 +90,7 @@ def analyze_image_with_openrouter(image_path: str, prompt: str = None) -> Dict[s
         # Prepare the request
         url = f"{OPENROUTER_BASE_URL}/chat/completions"
         headers = {
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
         
@@ -173,7 +178,12 @@ def analyze_multiple_images(image_paths: list, prompt: str = None) -> Dict[str, 
     Returns:
         Dict containing analysis result or error information
     """
-    if not OPENROUTER_API_KEY:
+    # Reload environment variables to catch any updates
+    from dotenv import load_dotenv
+    load_dotenv()
+    api_key = os.getenv('OPENROUTER_API_KEY')
+    
+    if not api_key:
         return {
             'success': False,
             'error': 'OpenRouter API key not configured. Please set OPENROUTER_API_KEY environment variable.'
@@ -200,7 +210,7 @@ def analyze_multiple_images(image_paths: list, prompt: str = None) -> Dict[str, 
         # Prepare the request
         url = f"{OPENROUTER_BASE_URL}/chat/completions"
         headers = {
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
         

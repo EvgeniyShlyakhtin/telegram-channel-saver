@@ -456,8 +456,12 @@ async def export_menu(db, client=None):
         print("This will create a separate text file for each message/media group.")
         
         # Check if OpenRouter API key is configured
-        from src.config import OPENROUTER_API_KEY
-        if OPENROUTER_API_KEY:
+        # Load environment variables fresh to catch any updates
+        from dotenv import load_dotenv
+        load_dotenv()
+        import os
+        api_key = os.getenv('OPENROUTER_API_KEY')
+        if api_key:
             print("✓ OpenRouter API key found - AI image analysis will be included")
             include_analysis = True
         else:
