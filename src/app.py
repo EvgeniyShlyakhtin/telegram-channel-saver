@@ -14,7 +14,7 @@ from src.database import load_database, save_database, get_db_path
 from src.client import check_authorized, login, restore_session, save_session, get_session_path
 from src.channels import list_channels, display_channels, select_active_channel, show_active_channel
 from src.users import save_channel_users, show_channel_users_stats, list_saved_users
-from src.messages import save_channel_messages, search_messages
+from src.messages import save_channel_messages, search_messages, browse_messages
 from src.media import download_video_messages, list_downloaded_videos
 from src.export import export_menu
 
@@ -212,13 +212,14 @@ class ChannelSaver:
                 print("10. Save channel messages")
                 print("11. List saved users")
                 print("12. Search messages")
-                print("13. Download videos")
-                print("14. List downloaded videos")
-                print("15. Export messages")
-                print("16. Logout")
-                print("17. Exit")
+                print("13. Browse message index")
+                print("14. Download videos")
+                print("15. List downloaded videos")
+                print("16. Export messages")
+                print("17. Logout")
+                print("18. Exit")
                 
-                choice = input("\nEnter your choice (1-17): ")
+                choice = input("\nEnter your choice (1-18): ")
                 
                 if choice == '1':
                     me = await self.client.get_me()
@@ -306,6 +307,8 @@ class ChannelSaver:
                 elif choice == '12':
                     await search_messages(self.db)
                 elif choice == '13':
+                    await browse_messages(self.db)
+                elif choice == '14':
                     print("\nVideo Download Options:")
                     print("1. Download all videos")
                     print("2. Download video circles only (round videos)")
@@ -323,11 +326,11 @@ class ChannelSaver:
                         await download_video_messages(self.client, self.db, self.db_path, limit=limit, round_videos_only=True)
                     elif video_choice == '3':
                         continue
-                elif choice == '14':
-                    list_downloaded_videos(self.db)
                 elif choice == '15':
-                    await export_menu(self.db, self.client)
+                    list_downloaded_videos(self.db)
                 elif choice == '16':
+                    await export_menu(self.db, self.client)
+                elif choice == '17':
                     await self.client.log_out()
                     print("\nLogged out successfully!")
                     if self.phone in self.db['sessions']:
@@ -336,7 +339,7 @@ class ChannelSaver:
                     self.db['active_channel'] = None
                     save_database(self.db_path, self.db)
                     break
-                elif choice == '17':
+                elif choice == '18':
                     break
                 else:
                     print("\nInvalid choice!")

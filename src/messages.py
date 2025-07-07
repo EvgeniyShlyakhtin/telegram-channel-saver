@@ -5,6 +5,7 @@ Handles operations related to Telegram channel messages.
 import os
 import logging
 import asyncio
+import html
 from datetime import datetime
 
 from src.config import MESSAGES_BATCH_SIZE, BATCH_DELAY, SAVE_INTERVAL, MAX_RETRIES, MEDIA_DOWNLOAD_DELAY
@@ -182,8 +183,10 @@ async def save_channel_messages(client, db, db_path, limit=None, force_redownloa
                             'date': str(message.date),
                             'edit_date': str(message.edit_date) if message.edit_date else None,
                             'from_id': message.from_id.user_id if message.from_id else None,
+                            'post_author': getattr(message, 'post_author', None),  # Get channel post author
                             'text': message.text,
                             'raw_text': message.raw_text,
+                            'text_html': getattr(message, 'text_html', message.text),  # Get HTML representation
                             'out': message.out,
                             'mentioned': message.mentioned,
                             'media_unread': message.media_unread,
@@ -641,4 +644,222 @@ def _display_message_results(messages, title):
         
         print("-" * 80)
     
-    print(f"\nTotal results: {len(messages)}") 
+    print(f"\nTotal results: {len(messages)}")
+
+async def browse_messages(db):
+    """
+    Browse messages in the active channel with pagination
+    
+    Args:
+        db: Database
+    """
+    active = get_active_channel(db)
+    if not active:
+        print("\nNo active channel selected!")
+        return
+        
+    channel_id = str(active['id'])
+    if channel_id not in db.get('messages', {}):
+        print("\nNo saved messages for this channel!")
+        return
+        
+    messages = db['messages'][channel_id]
+    if not messages:
+        print("\nNo messages found!")
+        return
+    
+    # Convert messages dictionary to list and sort by ID
+    message_list = [msg for msg_id, msg in messages.items()]
+    message_list.sort(key=lambda x: int(x['id']))
+    
+    page_size = 10  # Number of messages per page
+    current_page = 0
+    total_pages = (len(message_list) + page_size - 1) // page_size
+    
+    while True:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        start_idx = current_page * page_size
+        end_idx = min(start_idx + page_size, len(message_list))
+        current_messages = message_list[start_idx:end_idx]
+        
+        print(f"\nMessage Index for {active['title']} - Page {current_page + 1}/{total_pages}")
+        print(f"Total Messages: {len(message_list)}")
+        print("-" * 80)
+        print(f"{'ID':<10} | {'Date':<20} | {'From':<15} | {'Preview':<30}")
+        print("-" * 80)
+        
+        for msg in current_messages:
+            msg_id = msg['id']
+            date = msg['date'].split(' ')[0] if ' ' in msg.get('date', '') else msg.get('date', 'N/A')
+            
+            # Get sender info
+            from_id = msg.get('from_id', 'Unknown')
+            # Check for post_author first (for channel posts)
+            if msg.get('post_author'):
+                from_text = msg['post_author']
+            elif from_id and from_id != 'Unknown':
+                from_text = f"User_{from_id}"
+                if channel_id in db.get('users', {}) and str(from_id) in db.get('users', {}).get(channel_id, {}):
+                    user = db['users'][channel_id][str(from_id)]
+                    if user.get('username'):
+                        from_text = f"@{user['username']}"
+                    else:
+                        from_text = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip() or from_text
+            else:
+                if active['type'] == 'Channel':
+                    from_text = active['title']  # Use channel name for channel posts
+                else:
+                    from_text = "Unknown sender"
+            
+            # Get preview text (first line or part of it)
+            preview = msg.get('text', '')
+            if preview:
+                preview = preview.split('\n')[0][:30]  # First line, max 30 chars
+                if len(preview) < len(msg.get('text', '')):
+                    preview += "..."
+            elif msg.get('has_media'):
+                preview = f"[{msg.get('media_type', 'Media')}]"
+            else:
+                preview = "[Empty message]"
+                
+            print(f"{msg_id:<10} | {date:<20} | {from_text[:15]:<15} | {preview:<30}")
+        
+        print("-" * 80)
+        print("\nNavigation:")
+        print("n - Next page")
+        print("p - Previous page")
+        print("g - Go to page")
+        print("j - Jump to message ID")
+        print("v - View message HTML source")
+        print("q - Return to main menu")
+        
+        choice = input("\nEnter your choice: ").lower()
+        
+        if choice == 'n':
+            if current_page < total_pages - 1:
+                current_page += 1
+        elif choice == 'p':
+            if current_page > 0:
+                current_page -= 1
+        elif choice == 'g':
+            try:
+                page = int(input("\nEnter page number: "))
+                if 1 <= page <= total_pages:
+                    current_page = page - 1
+                else:
+                    print(f"\nPage number must be between 1 and {total_pages}")
+                    input("Press Enter to continue...")
+            except ValueError:
+                print("\nInvalid page number!")
+                input("Press Enter to continue...")
+        elif choice == 'j':
+            msg_id = input("\nEnter message ID: ")
+            if msg_id in messages:
+                # Find the page containing this message
+                for i, msg in enumerate(message_list):
+                    if str(msg['id']) == msg_id:
+                        current_page = i // page_size
+                        break
+                # Highlight the message on the next iteration
+            else:
+                print("\nMessage ID not found!")
+                input("Press Enter to continue...")
+        elif choice == 'v':
+            msg_id = input("\nEnter message ID to view: ")
+            if msg_id in messages:
+                view_message_html(messages[msg_id])
+                input("\nPress Enter to return to browsing...")
+            else:
+                print("\nMessage ID not found!")
+                input("Press Enter to continue...")
+        elif choice == 'q':
+            return
+        
+def view_message_html(message):
+    """
+    Display HTML source of a message
+    
+    Args:
+        message: Message dictionary to display
+    """
+    os.system('cls' if os.name == 'nt' else 'clear')
+    
+    print(f"\nMessage #{message['id']} HTML Source")
+    print("=" * 80)
+    
+    # Show Telegram's HTML formatting if available
+    if message.get('text_html'):
+        print("\nTelegram HTML Formatting:")
+        print("-" * 80)
+        print(message['text_html'])
+        print("-" * 80)
+    
+    # Create structured HTML representation
+    html_content = "<div class='message'>\n"
+    
+    # Add message header with metadata
+    html_content += f"  <div class='message-header'>\n"
+    html_content += f"    <div class='message-id'>Message ID: {message['id']}</div>\n"
+    html_content += f"    <div class='message-date'>Date: {message['date']}</div>\n"
+    
+    if message.get('post_author'):
+        html_content += f"    <div class='message-from'>Author: {message['post_author']}</div>\n"
+    elif message.get('from_id'):
+        html_content += f"    <div class='message-from'>From: {message['from_id']}</div>\n"
+    
+    if message.get('views'):
+        html_content += f"    <div class='message-views'>Views: {message['views']}</div>\n"
+        
+    if message.get('forwards'):
+        html_content += f"    <div class='message-forwards'>Forwards: {message['forwards']}</div>\n"
+    
+    html_content += "  </div>\n"
+    
+    # Add message content
+    html_content += "  <div class='message-content'>\n"
+    
+    # Use Telegram HTML if available, otherwise use our escaped version
+    if message.get('text_html'):
+        html_content += f"    <div class='message-text'>{message['text_html']}</div>\n"
+    elif message.get('text'):
+        escaped_text = html.escape(message['text'])
+        html_content += f"    <div class='message-text'>{escaped_text}</div>\n"
+    
+    # Include media info
+    if message.get('has_media'):
+        html_content += f"    <div class='message-media'>\n"
+        html_content += f"      <div class='media-type'>{message.get('media_type', 'Unknown media')}</div>\n"
+        
+        if message.get('media_file_path'):
+            html_content += f"      <div class='media-path'>{message.get('media_file_path')}</div>\n"
+            
+        html_content += "    </div>\n"
+    
+    # Add reactions
+    if message.get('reactions') and len(message.get('reactions', [])) > 0:
+        html_content += "    <div class='message-reactions'>\n"
+        
+        for reaction in message.get('reactions', []):
+            emoji = reaction.get('emoticon') or f"Custom({reaction.get('document_id')})"
+            count = reaction.get('count', 0)
+            html_content += f"      <span class='reaction'>{emoji} {count}</span>\n"
+        
+        html_content += "    </div>\n"
+    
+    html_content += "  </div>\n"
+    html_content += "</div>"
+    
+    # Display the complete structured HTML content
+    print("\nComplete Structured HTML:")
+    print("-" * 80)
+    print(html_content)
+    
+    # Show a raw version too
+    print("\nRaw Message Data:")
+    print("-" * 80)
+    for key, value in message.items():
+        if key not in ['reactions', 'text_html']:  # Skip complex nested structures and HTML
+            print(f"{key}: {value}")
+    
+    if message.get('reactions'):
+        print(f"reactions: {len(message['reactions'])} reactions") 
