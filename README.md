@@ -78,6 +78,9 @@ Created by [Sergey Bulaev](https://t.me/sergiobulaev) - Follow my Telegram chann
    # Telegram API Credentials
    API_ID=your_api_id      # numbers only, no quotes
    API_HASH=your_api_hash  # string, no quotes
+   
+   # Optional: OpenRouter API Key for AI image analysis
+   OPENROUTER_API_KEY=your_openrouter_api_key
    ```
 
 ## Usage
@@ -96,6 +99,7 @@ Created by [Sergey Bulaev](https://t.me/sergiobulaev) - Follow my Telegram chann
    - List and select channels/groups
    - Save channel messages and users
    - Search through saved content
+   - Browse messages with pagination and HTML viewing
    - View statistics and user information
    - Manage multiple Telegram sessions
 
@@ -133,14 +137,26 @@ Created by [Sergey Bulaev](https://t.me/sergiobulaev) - Follow my Telegram chann
 - Filter messages with media
 - View user's last messages
 
+### Message Browsing Features
+
+- Browse saved messages with pagination (10 messages per page)
+- Navigate through message pages with simple commands
+- Jump to specific messages by ID or page number
+- View message HTML source with proper formatting
+- Interactive navigation with next/previous page controls
+- Message preview with ID, date, sender, and content snippet
+
 ### Export Features
 
 - Export all messages from a channel to a text file
 - Export messages from a specific user in a channel
+- Export individual message files with AI-powered image analysis
 - Channel statistics display (message count, media count, user count)
 - Formatted export with original timestamps, user information, and replies
 - Automatic file naming with channel ID, channel name, and timestamp
 - Export files stored in 'exports' directory
+- Media group handling for related messages
+- OpenRouter API integration for GPT-4 image analysis
 
 ## Data Storage
 
